@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  attendee
+  eventorg
+}
+
+enum Category {
+  rocknroll
+  edm
+  jazz
+  kpop
+  classic
+  country
+  pop
+  metal
+}
+
+enum Type {
+  free
+  paid
+}
+
+enum Status {
+  pending
+  waiting
+  paid
+  decline
+}
+
+model User {
+  id           Int            @id @default(autoincrement())
+  email        String         @unique
+  username     String         @unique
+  first_name   String?
+  last_name    String?
+  password     String
+  phone        String         @unique
+  avatar       String?
+  role         Role
+  dob          String?
+  refCode      String?        @unique
+  codeUsed     String?        @unique
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  is_verified  Boolean        @default(false)
+  point        Int?
+  discount     Int?
+  Review       Review[]
+  Transaction  Transaction[]
+  Event        Event[]
+  ReferralCode ReferralCode[]
+}
+
+model Event {
+  id          Int           @id @default(autoincrement())
+  userID      Int
+  eventname   String        @unique
+  type        Type
+  price       Float
+  date        String
+  venue       String
+  quota       Int
+  category    Category
+  description String        @db.Text
+  media       String?
+  Review      Review[]
+  Promotion   Promotion?
+  user        User          @relation(fields: [userID], references: [id])
+  Transaction Transaction[]
+}
+
+model Transaction {
+  id             Int      @id @default(autoincrement())
+  userID         Int
+  eventID        Int
+  amount         Int
+  paymentDate    DateTime @default(now())
+  raw_price      Float
+  total_discount Int
+  sum_price      Float
+  status         Status
+  proof          String?
+  user           User     @relation(fields: [userID], references: [id])
+  event          Event    @relation(fields: [eventID], references: [id])
+}
+
+model Review {
+  id             Int    @id @default(autoincrement())
+  review_content String @db.Text
+  ratings        Int
+  userID         Int
+  eventID        Int
+  user           User   @relation(fields: [userID], references: [id])
+  event          Event  @relation(fields: [eventID], references: [id])
+}
+
+model Promotion {
+  id                  Int      @id @default(autoincrement())
+  start_date          DateTime
+  end_time            DateTime
+  voucher_code        String
+  quota               Int
+  discount_percentage Int
+  eventID             Int      @unique
+  event               Event    @relation(fields: [eventID], references: [id])
+}
+
+model ReferralCode {
+  id        Int      @id @default(autoincrement())
+  userID    Int
+  point     Int      @default(10000)
+  StartsAt  DateTime @default(now())
+  ExpiresAt DateTime
+  user      User     @relation(fields: [userID], references: [id])
+}
